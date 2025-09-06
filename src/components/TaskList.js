@@ -7,7 +7,7 @@ const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [filterOptions, setFilterOptions] = useState({
-    overdue: "",
+    status: "",
     priority: "",
     category: "",
   });
@@ -56,8 +56,8 @@ const TaskList = () => {
   const filteredTasks = useMemo(() => {
     let result = [...tasks];
 
-    if (filterOptions.overdue === "overdue") {
-      result = result.filter((task) => task.is_overdue);
+    if (filterOptions.status) {
+      result = result.filter((task) => task.status === filterOptions.status);
     }
 
     if (filterOptions.priority) {
@@ -86,6 +86,22 @@ const TaskList = () => {
         <option value="">All</option>
         <option value="overdue">Overdue</option>
       </Form.Select>
+
+      <Form.Group controlId="statusFilter">
+        <Form.Label>Filter by Status</Form.Label>
+        <Form.Select
+          value={filterOptions.status}
+          onChange={(e) =>
+            setFilterOptions({ ...filterOptions, status: e.target.value })
+          }
+        >
+          <option value="">All</option>
+          <option value="pending">Pending</option>
+          <option value="in_progress">In Progress</option>
+          <option value="done">Done</option>
+        </Form.Select>
+      </Form.Group>
+
       {/* Priority filter dropdown */}
       <Form.Group
         controlId="priorityFilter"
