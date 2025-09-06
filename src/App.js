@@ -8,6 +8,7 @@ import Register from "./components/Register";
 import NavBar from "./components/NavBar";
 import CreateTask from "./components/CreateTask";
 import ProtectedRoute from "./components/ProtectedRoute";
+import TaskList from "./components/TaskList";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -78,6 +79,14 @@ function App() {
           element={
             <ProtectedRoute isLoggedIn={isLoggedIn}>
               <CreateTask />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tasklist"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <TaskList />
             </ProtectedRoute>
           }
         />
