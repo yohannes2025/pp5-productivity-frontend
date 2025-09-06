@@ -7,6 +7,7 @@ const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [filterOptions, setFilterOptions] = useState({ overdue: "" });
   const [users, setUsers] = useState([]);
+  const [filterOptions, setFilterOptions] = useState({ priority: "" });
 
   // Fetch tasks on component mount
   useEffect(() => {
@@ -34,13 +35,18 @@ const TaskList = () => {
     fetchUsers();
   }, []);
 
-  // Helper function
+  // Helper function to get username by ID
   const getUserName = (id) =>
     users.find((user) => user.id === id)?.username || "Unknown";
 
-  // Handle filter change
+  // Handle filter change for overdue
   const handleFilterChange = (e) => {
     setFilterOptions({ ...filterOptions, overdue: e.target.value });
+  };
+
+  // Handle filter change for priority
+  const handlePriorityFilterChange = (e) => {
+    setFilterOptions({ ...filterOptions, priority: e.target.value });
   };
 
   // Memoized filtered tasks
@@ -49,6 +55,12 @@ const TaskList = () => {
 
     if (filterOptions.overdue === "overdue") {
       result = result.filter((task) => task.is_overdue);
+    }
+
+    if (filterOptions.priority) {
+      result = result.filter(
+        (task) => task.priority === filterOptions.priority
+      );
     }
 
     return result;
