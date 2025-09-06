@@ -5,9 +5,11 @@ import api from "../services/api";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
-  const [filterOptions, setFilterOptions] = useState({ overdue: "" });
   const [users, setUsers] = useState([]);
-  const [filterOptions, setFilterOptions] = useState({ priority: "" });
+  const [filterOptions, setFilterOptions] = useState({
+    overdue: "",
+    priority: "",
+  });
 
   // Fetch tasks on component mount
   useEffect(() => {
@@ -22,7 +24,7 @@ const TaskList = () => {
     fetchTasks();
   }, []);
 
-  // Add useEffect
+  // Fetch users on component mount
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -40,7 +42,7 @@ const TaskList = () => {
     users.find((user) => user.id === id)?.username || "Unknown";
 
   // Handle filter change for overdue
-  const handleFilterChange = (e) => {
+  const handleOverdueFilterChange = (e) => {
     setFilterOptions({ ...filterOptions, overdue: e.target.value });
   };
 
@@ -68,16 +70,34 @@ const TaskList = () => {
 
   return (
     <Container>
-      {/* Filter dropdown */}
+      {/* Overdue filter dropdown */}
       <Form.Select
-        onChange={handleFilterChange}
+        onChange={handleOverdueFilterChange}
         value={filterOptions.overdue}
-        style={{ marginBottom: "1rem", width: "200px" }}
+        style={{ marginBottom: "1rem", width: "200px", marginRight: "1rem" }}
       >
         <option value="">All</option>
         <option value="overdue">Overdue</option>
       </Form.Select>
 
+      {/* Priority filter dropdown */}
+      <Form.Group
+        controlId="priorityFilter"
+        style={{ display: "inline-block", marginBottom: "1rem" }}
+      >
+        <Form.Label>Filter by Priority</Form.Label>
+        <Form.Select
+          value={filterOptions.priority}
+          onChange={handlePriorityFilterChange}
+        >
+          <option value="">All</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </Form.Select>
+      </Form.Group>
+
+      {/* Tasks Table */}
       <Table striped bordered hover>
         <thead>
           <tr>
