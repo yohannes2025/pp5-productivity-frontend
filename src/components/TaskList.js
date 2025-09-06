@@ -6,6 +6,7 @@ import api from "../services/api";
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [filterOptions, setFilterOptions] = useState({ overdue: "" });
+  const [users, setUsers] = useState([]);
 
   // Fetch tasks on component mount
   useEffect(() => {
@@ -19,6 +20,23 @@ const TaskList = () => {
     };
     fetchTasks();
   }, []);
+
+  // Add useEffect
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await api.get("/api/users/");
+        setUsers(response.data);
+      } catch (error) {
+        console.error("Failed to load users.");
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Helper function
+  const getUserName = (id) =>
+    users.find((user) => user.id === id)?.username || "Unknown";
 
   // Handle filter change
   const handleFilterChange = (e) => {
@@ -70,7 +88,9 @@ const TaskList = () => {
               <td>{task.priority}</td>
               <td>{task.category}</td>
               <td>{task.status}</td>
-              <td>{task.assigned_users.join(", ")}</td>
+              <td>
+                {task.assigned_users.map((id) => getUserName(id)).join(", ")}
+              </td>
             </tr>
           ))}
         </tbody>
