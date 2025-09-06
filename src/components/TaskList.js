@@ -9,6 +9,7 @@ const TaskList = () => {
   const [filterOptions, setFilterOptions] = useState({
     overdue: "",
     priority: "",
+    category: "",
   });
 
   // Fetch tasks on component mount
@@ -65,6 +66,12 @@ const TaskList = () => {
       );
     }
 
+    if (filterOptions.category) {
+      result = result.filter(
+        (task) => task.category === filterOptions.category
+      );
+    }
+
     return result;
   }, [tasks, filterOptions]);
 
@@ -79,7 +86,6 @@ const TaskList = () => {
         <option value="">All</option>
         <option value="overdue">Overdue</option>
       </Form.Select>
-
       {/* Priority filter dropdown */}
       <Form.Group
         controlId="priorityFilter"
@@ -94,6 +100,24 @@ const TaskList = () => {
           <option value="low">Low</option>
           <option value="medium">Medium</option>
           <option value="high">High</option>
+        </Form.Select>
+      </Form.Group>
+
+      {/* Category filter dropdown */}
+      <Form.Group controlId="categoryFilter">
+        <Form.Label>Filter by Category</Form.Label>
+        <Form.Select
+          value={filterOptions.category}
+          onChange={(e) =>
+            setFilterOptions({ ...filterOptions, category: e.target.value })
+          }
+        >
+          <option value="">All</option>
+          <option value="development">Development</option>
+          <option value="design">Design</option>
+          <option value="testing">Testing</option>
+          <option value="documentation">Documentation</option>
+          <option value="other">Other</option>
         </Form.Select>
       </Form.Group>
 
