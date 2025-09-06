@@ -35,7 +35,7 @@ const CreateTask = () => {
         title,
         description,
         due_date: dueDate.toISOString().split("T")[0],
-        priority,
+        priority: priority,
         category,
         status,
         assigned_users: assignedUsers,
