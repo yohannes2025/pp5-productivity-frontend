@@ -108,6 +108,7 @@ const TaskList = () => {
             <th>Status</th>
             <th>Assigned Users</th>
             <th>Priority</th>
+            <th>Category</th>
           </tr>
         </thead>
         <tbody>
@@ -125,6 +126,7 @@ const TaskList = () => {
                 {task.assigned_users.map((id) => getUserName(id)).join(", ")}
               </td>
               <td>{task.priority}</td>
+              <td>{task.category}</td>
             </tr>
           ))}
         </tbody>
