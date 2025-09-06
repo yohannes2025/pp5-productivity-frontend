@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { BrowserRouter } from "react-router-dom";
-import api from "./services/api"; // to be added later
+import api from "./services/api";
+import Login from "./components/Login";
+import Register from "./components/Register";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -31,7 +33,8 @@ function App() {
   return (
     <div className="App">
       <Routes>
-        <Route path="/" element={<div>Home</div>} /> // Placeholder
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
       </Routes>
     </div>
   );
