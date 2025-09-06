@@ -1,11 +1,13 @@
-// src / components / TaskList.js;
-import React, { useState, useEffect } from "react";
-import { Table, Container } from "react-bootstrap";
+// src/components/TaskList.js
+import React, { useState, useEffect, useMemo } from "react";
+import { Table, Container, Form } from "react-bootstrap";
 import api from "../services/api";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
+  const [filterOptions, setFilterOptions] = useState({ overdue: "" });
 
+  // Fetch tasks on component mount
   useEffect(() => {
     const fetchTasks = async () => {
       try {
@@ -18,8 +20,34 @@ const TaskList = () => {
     fetchTasks();
   }, []);
 
+  // Handle filter change
+  const handleFilterChange = (e) => {
+    setFilterOptions({ ...filterOptions, overdue: e.target.value });
+  };
+
+  // Memoized filtered tasks
+  const filteredTasks = useMemo(() => {
+    let result = [...tasks];
+
+    if (filterOptions.overdue === "overdue") {
+      result = result.filter((task) => task.is_overdue);
+    }
+
+    return result;
+  }, [tasks, filterOptions]);
+
   return (
     <Container>
+      {/* Filter dropdown */}
+      <Form.Select
+        onChange={handleFilterChange}
+        value={filterOptions.overdue}
+        style={{ marginBottom: "1rem", width: "200px" }}
+      >
+        <option value="">All</option>
+        <option value="overdue">Overdue</option>
+      </Form.Select>
+
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -32,9 +60,12 @@ const TaskList = () => {
           </tr>
         </thead>
         <tbody>
-          {tasks.map((task) => (
+          {filteredTasks.map((task) => (
             <tr key={task.id}>
-              <td>{task.title}</td>
+              {/* Style title based on overdue status */}
+              <td style={{ color: task.is_overdue ? "red" : "black" }}>
+                {task.title}
+              </td>
               <td>{task.due_date}</td>
               <td>{task.priority}</td>
               <td>{task.category}</td>
