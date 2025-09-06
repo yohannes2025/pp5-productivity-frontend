@@ -6,6 +6,8 @@ import api from "./services/api";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import NavBar from "./components/NavBar";
+import CreateTask from "./components/CreateTask";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -71,6 +73,14 @@ function App() {
       <Routes>
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route
+          path="/createtask"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <CreateTask />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </div>
   );
