@@ -4,6 +4,7 @@ import { Form, Button, Container, Card } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import api from "../services/api";
 import { toast } from "react-toastify";
+import "react-datepicker/dist/react-datepicker.css";
 
 const CreateTask = () => {
   const [title, setTitle] = useState("");
@@ -78,6 +79,7 @@ const CreateTask = () => {
               <DatePicker
                 selected={dueDate}
                 onChange={(date) => setDueDate(date)}
+                minDate={new Date()}
               />
             </Form.Group>
             <Form.Group controlId="priority">
