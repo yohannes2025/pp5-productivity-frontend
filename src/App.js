@@ -10,6 +10,7 @@ import CreateTask from "./components/CreateTask";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TaskList from "./components/TaskList";
 import { Container } from "react-bootstrap";
+import styles from "./App.css";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

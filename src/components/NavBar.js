@@ -15,7 +15,7 @@ const NavBar = ({ isLoggedIn, onLogout, user }) => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="ms-auto">
             {isLoggedIn && user && (
-              <Nav.Link disabled>Welcome, {user.username}</Nav.Link>
+              <Nav.Link>Welcome, {user.username}</Nav.Link>
             )}
             {isLoggedIn ? (
               <>
