@@ -1,0 +1,39 @@
+/* Common.module.css */
+.container {
+  min-height: 100vh;
+  padding-top: 2rem;
+  background-color: #f8f9fa;
+  padding-top: 40px;
+}
+
+.responsiveTitle {
+  font-size: 2rem; /* mobile */
+}
+
+@media (min-width: 768px) {
+  .responsiveTitle {
+    font-size: 2.5rem; /* tablets/laptops */
+  }
+}
+
+@media (min-width: 1200px) {
+  .responsiveTitle {
+    font-size: 3.5rem; /* desktops */
+  }
+}
+
+.responsiveSubtitle {
+  font-size: 1.125rem; /* mobile */
+}
+
+@media (min-width: 768px) {
+  .responsiveSubtitle {
+    font-size: 1.5rem; /* tablets/laptops */
+  }
+}
+
+@media (min-width: 1200px) {
+  .responsiveSubtitle {
+    font-size: 1.75rem; /* desktops */
+  }
+}
