@@ -27,7 +27,9 @@ const TaskList = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await api.get("/api/tasks/");
+        const response = await api.get("/api/tasks/", {
+          params: { search: searchText },
+        });
         setTasks(response.data);
       } catch (error) {
         console.error("Failed to load tasks.");
