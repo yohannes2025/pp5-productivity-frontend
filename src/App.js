@@ -9,6 +9,7 @@ import NavBar from "./components/NavBar";
 import CreateTask from "./components/CreateTask";
 import ProtectedRoute from "./components/ProtectedRoute";
 import TaskList from "./components/TaskList";
+import { Container } from "react-bootstrap";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -71,26 +72,28 @@ function App() {
   return (
     <div className="App">
       <NavBar isLoggedIn={isLoggedIn} onLogout={handleLogout} user={user} />
-      <Routes>
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login onLogin={handleLogin} />} />
-        <Route
-          path="/createtask"
-          element={
-            <ProtectedRoute isLoggedIn={isLoggedIn}>
-              <CreateTask />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/tasklist"
-          element={
-            <ProtectedRoute isLoggedIn={isLoggedIn}>
-              <TaskList />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+      <Container>
+        <Routes>
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route
+            path="/createtask"
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <CreateTask />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasklist"
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <TaskList />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Container>
     </div>
   );
 }
