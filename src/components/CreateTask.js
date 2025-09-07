@@ -16,7 +16,6 @@ import DatePicker from "react-datepicker";
 import api from "../services/api";
 import { toast } from "react-toastify";
 import "react-datepicker/dist/react-datepicker.css";
-import { Container, Card, Form, Button, Alert, Spinner } from "react-bootstrap";
 
 const CreateTask = () => {
   const [title, setTitle] = useState("");
