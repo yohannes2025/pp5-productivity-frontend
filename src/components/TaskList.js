@@ -1,4 +1,3 @@
-// src/components/TaskList.js
 import React, { useState, useEffect, useMemo } from "react";
 import { Table, Container, Form } from "react-bootstrap";
 import api from "../services/api";
@@ -7,12 +6,13 @@ const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [filterOptions, setFilterOptions] = useState({
+    overdue: "",
     status: "",
     priority: "",
     category: "",
   });
 
-  // Fetch tasks on component mount
+  // Fetch tasks
   useEffect(() => {
     const fetchTasks = async () => {
       try {
@@ -25,7 +25,7 @@ const TaskList = () => {
     fetchTasks();
   }, []);
 
-  // Fetch users on component mount
+  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -38,23 +38,16 @@ const TaskList = () => {
     fetchUsers();
   }, []);
 
-  // Helper function to get username by ID
   const getUserName = (id) =>
     users.find((user) => user.id === id)?.username || "Unknown";
-
-  // Handle filter change for overdue
-  const handleOverdueFilterChange = (e) => {
-    setFilterOptions({ ...filterOptions, overdue: e.target.value });
-  };
-
-  // Handle filter change for priority
-  const handlePriorityFilterChange = (e) => {
-    setFilterOptions({ ...filterOptions, priority: e.target.value });
-  };
 
   // Memoized filtered tasks
   const filteredTasks = useMemo(() => {
     let result = [...tasks];
+
+    if (filterOptions.overdue === "overdue") {
+      result = result.filter((task) => task.is_overdue);
+    }
 
     if (filterOptions.status) {
       result = result.filter((task) => task.status === filterOptions.status);
@@ -77,9 +70,11 @@ const TaskList = () => {
 
   return (
     <Container>
-      {/* Overdue filter dropdown */}
+      {/* Overdue filter */}
       <Form.Select
-        onChange={handleOverdueFilterChange}
+        onChange={(e) =>
+          setFilterOptions({ ...filterOptions, overdue: e.target.value })
+        }
         value={filterOptions.overdue}
         style={{ marginBottom: "1rem", width: "200px", marginRight: "1rem" }}
       >
@@ -87,6 +82,7 @@ const TaskList = () => {
         <option value="overdue">Overdue</option>
       </Form.Select>
 
+      {/* Status filter */}
       <Form.Group controlId="statusFilter">
         <Form.Label>Filter by Status</Form.Label>
         <Form.Select
@@ -102,7 +98,7 @@ const TaskList = () => {
         </Form.Select>
       </Form.Group>
 
-      {/* Priority filter dropdown */}
+      {/* Priority filter */}
       <Form.Group
         controlId="priorityFilter"
         style={{ display: "inline-block", marginBottom: "1rem" }}
@@ -110,7 +106,9 @@ const TaskList = () => {
         <Form.Label>Filter by Priority</Form.Label>
         <Form.Select
           value={filterOptions.priority}
-          onChange={handlePriorityFilterChange}
+          onChange={(e) =>
+            setFilterOptions({ ...filterOptions, priority: e.target.value })
+          }
         >
           <option value="">All</option>
           <option value="low">Low</option>
@@ -119,7 +117,7 @@ const TaskList = () => {
         </Form.Select>
       </Form.Group>
 
-      {/* Category filter dropdown */}
+      {/* Category filter */}
       <Form.Group controlId="categoryFilter">
         <Form.Label>Filter by Category</Form.Label>
         <Form.Select
@@ -147,14 +145,11 @@ const TaskList = () => {
             <th>Category</th>
             <th>Status</th>
             <th>Assigned Users</th>
-            <th>Priority</th>
-            <th>Category</th>
           </tr>
         </thead>
         <tbody>
           {filteredTasks.map((task) => (
             <tr key={task.id}>
-              {/* Style title based on overdue status */}
               <td style={{ color: task.is_overdue ? "red" : "black" }}>
                 {task.title}
               </td>
@@ -165,8 +160,6 @@ const TaskList = () => {
               <td>
                 {task.assigned_users.map((id) => getUserName(id)).join(", ")}
               </td>
-              <td>{task.priority}</td>
-              <td>{task.category}</td>
             </tr>
           ))}
         </tbody>
