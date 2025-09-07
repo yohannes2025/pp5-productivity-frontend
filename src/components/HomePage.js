@@ -1,6 +1,6 @@
 // src/components/HomePage.js
 import React from "react";
-import { Container, Button } from "react-bootstrap";
+import { Container, Row, Col, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
 const HomePage = () => {

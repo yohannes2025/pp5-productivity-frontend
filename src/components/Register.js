@@ -1,6 +1,14 @@
 // src/components/Register.js
 import React, { useState } from "react";
-import { Form, Button, Container, Alert, Card } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Form,
+  Button,
+  Alert,
+  Card,
+} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { toast } from "react-toastify";
@@ -24,7 +32,7 @@ const Register = () => {
       return;
     }
     try {
-      await api.post("/api/register/", {
+      await api.post("/register/", {
         name,
         email,
         password,
