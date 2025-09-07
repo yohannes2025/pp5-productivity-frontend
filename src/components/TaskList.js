@@ -12,6 +12,8 @@ const TaskList = () => {
     category: "",
   });
 
+  const [searchText, setSearchText] = useState("");
+
   // Fetch tasks
   useEffect(() => {
     const fetchTasks = async () => {
@@ -65,11 +67,30 @@ const TaskList = () => {
       );
     }
 
+    if (searchText) {
+      const lowerSearch = searchText.toLowerCase();
+      result = result.filter(
+        (task) =>
+          task.title.toLowerCase().includes(lowerSearch) ||
+          task.description.toLowerCase().includes(lowerSearch)
+      );
+    }
+
     return result;
-  }, [tasks, filterOptions]);
+  }, [tasks, filterOptions, searchText]);
 
   return (
     <Container>
+      {/* Search input */}
+      <Form.Group controlId="search">
+        <Form.Label>Search</Form.Label>
+        <Form.Control
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Search by title or description"
+        />
+      </Form.Group>
+
       {/* Overdue filter */}
       <Form.Select
         onChange={(e) =>
@@ -133,6 +154,16 @@ const TaskList = () => {
           <option value="documentation">Documentation</option>
           <option value="other">Other</option>
         </Form.Select>
+      </Form.Group>
+
+      {/* Search input */}
+      <Form.Group controlId="search">
+        <Form.Label>Search</Form.Label>
+        <Form.Control
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          placeholder="Search by title or description"
+        />
       </Form.Group>
 
       {/* Tasks Table */}
