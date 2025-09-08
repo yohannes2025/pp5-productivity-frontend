@@ -4,7 +4,12 @@ import NavBar from "./components/NavBar";
 import styles from "./App.module.css";
 import Container from "react-bootstrap/Container";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import EditTask from "./components/EditTask";
@@ -15,9 +20,12 @@ import CreateTaskPage from "./components/CreateTaskPage";
 import NotFound from "./components/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
 import api from "./services/api";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -36,6 +44,7 @@ function App() {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         setIsLoggedIn(false);
+        setUser(null);
       }
     };
 
@@ -55,7 +64,8 @@ function App() {
 
   return (
     <div className="App">
-      <NavBar isLoggedIn={isLoggedIn} onLogout={handleLogout} />
+      <ToastContainer position="top-right" autoClose={3000} />
+      <NavBar isLoggedIn={isLoggedIn} onLogout={handleLogout} user={user} />
       <Container className={styles.container}>
         <Routes>
           <Route
