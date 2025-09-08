@@ -1,4 +1,4 @@
-// export default NavBar;
+// src/components/NavBar.js
 
 import React, { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
@@ -7,16 +7,38 @@ import styles from "../styles/NavBar.module.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function NavBar({ isLoggedIn, onLogout, user }) {
-  const [expanded, setExpanded] = useState(false); // manages collapse state
+  const [expanded, setExpanded] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    setExpanded(false); // close navbar on route change
+    setExpanded(false);
   }, [location.pathname]);
 
   const handleNavClick = () => {
-    setExpanded(false); // close navbar on link click
+    setExpanded(false);
   };
+
+  const loggedInLinks = (
+    <>
+      <NavLink
+        to="/createtask"
+        className={`${styles.NavLink} fw-bold`}
+        onClick={handleNavClick}
+      >
+        <i className="fa-solid fa-square-plus"></i> Create Task
+      </NavLink>
+      <NavLink
+        to="/tasklist"
+        className={`${styles.NavLink} fw-bold`}
+        onClick={handleNavClick}
+      >
+        <i className="fa-solid fa-list-check"></i> Task List
+      </NavLink>
+      <Nav.Link onClick={onLogout} className={`${styles.NavLink} fw-bold`}>
+        <i className="fa-solid fa-sign-out-alt"></i> Logout
+      </Nav.Link>
+    </>
+  );
 
   return (
     <>
@@ -37,14 +59,17 @@ function NavBar({ isLoggedIn, onLogout, user }) {
             <Navbar.Toggle aria-controls="navbarScroll" />
             <Navbar.Collapse id="navbarScroll">
               <Nav className="ms-auto my-2 my-lg-0" navbarScroll>
-                {isLoggedIn && user && (
-                  <Nav.Link className={`${styles.NavLink} fw-bold`}>
+                {/* Corrected logic */}
+                {isLoggedIn && user ? (
+                  <NavLink
+                    to="/"
+                    className={`${styles.NavLink} fw-bold`}
+                    onClick={handleNavClick}
+                  >
                     <i className="fa-solid fa-house"></i> Welcome,{" "}
                     {user.username}
-                  </Nav.Link>
-                )}
-
-                {!isLoggedIn && (
+                  </NavLink>
+                ) : (
                   <NavLink
                     to="/"
                     className={`${styles.NavLink} fw-bold`}
@@ -53,31 +78,7 @@ function NavBar({ isLoggedIn, onLogout, user }) {
                     <i className="fa-solid fa-house"></i> Home Page
                   </NavLink>
                 )}
-
-                {isLoggedIn && (
-                  <>
-                    <NavLink
-                      to="/CreateTask"
-                      className={`${styles.NavLink} fw-bold`}
-                      onClick={handleNavClick}
-                    >
-                      <i className="fa-solid fa-square-plus"></i> Create Task
-                    </NavLink>
-                    <NavLink
-                      to="/tasklist"
-                      className={`${styles.NavLink} fw-bold`}
-                      onClick={handleNavClick}
-                    >
-                      <i className="fa-solid fa-list-check"></i> Task List
-                    </NavLink>
-                    <Nav.Link
-                      onClick={onLogout}
-                      className={`${styles.NavLink} fw-bold`}
-                    >
-                      <i className="fa-solid fa-sign-out-alt"></i> Logout
-                    </Nav.Link>
-                  </>
-                )}
+                {isLoggedIn && loggedInLinks}
               </Nav>
             </Navbar.Collapse>
           </Container>

@@ -1,4 +1,5 @@
 // Fsr Path: src/components/Login.js
+
 import React, { useState } from "react";
 import api from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
@@ -35,8 +36,8 @@ const Login = ({ onLogin }) => {
       localStorage.setItem("refresh_token", refresh);
       api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
-      await onLogin(); // updates state
-      navigate("/"); // redirect only after state is updated
+      await onLogin(access); // Pass the access token here
+      navigate("/");
     } catch (err) {
       console.error("Login error:", err.response || err);
       setError(

@@ -27,32 +27,40 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
+  const fetchUser = async (token) => {
+    try {
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      // Corrected URL to match the backend
+      const res = await api.get("/api/users/me/");
+      setUser(res.data);
+      setIsLoggedIn(true);
+      return res.data;
+    } catch (err) {
+      console.error("Failed to fetch user:", err);
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setIsLoggedIn(false);
+      setUser(null);
+      throw err;
+    }
+  };
+
   useEffect(() => {
-    const verifyToken = async () => {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        setIsLoggedIn(false);
-        return;
-      }
-
-      try {
-        await api.post("/api/token/verify/", { token });
-        setIsLoggedIn(true);
-        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      } catch (err) {
-        console.error("Invalid token, logging out");
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        setIsLoggedIn(false);
-        setUser(null);
-      }
-    };
-
-    verifyToken();
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      fetchUser(token);
+    } else {
+      setIsLoggedIn(false);
+      setUser(null);
+    }
   }, []);
 
-  const handleLogin = () => {
-    setIsLoggedIn(true);
+  const handleLogin = async (token) => {
+    try {
+      await fetchUser(token);
+    } catch (err) {
+      console.error("Login failed:", err);
+    }
   };
 
   const handleLogout = () => {
@@ -60,6 +68,7 @@ function App() {
     localStorage.removeItem("refresh_token");
     delete api.defaults.headers.common["Authorization"];
     setIsLoggedIn(false);
+    setUser(null);
   };
 
   return (
