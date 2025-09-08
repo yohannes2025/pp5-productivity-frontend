@@ -66,7 +66,7 @@ function NavBar({ isLoggedIn, onLogout, user }) {
                     className={`${styles.NavLink} fw-bold`}
                     onClick={handleNavClick}
                   >
-                    <i className="fa-solid fa-house"></i> Welcome,{" "}
+                    <i className="fa-solid fa-user"></i> Welcome,{" "}
                     {user.username}
                   </NavLink>
                 ) : (
