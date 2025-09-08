@@ -6,7 +6,7 @@ import { Navbar, Container, Nav } from "react-bootstrap";
 import styles from "../styles/NavBar.module.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-function NavBar({ isLoggedIn, onLogout }) {
+function NavBar({ isLoggedIn, onLogout, user }) {
   const [expanded, setExpanded] = useState(false); // manages collapse state
   const location = useLocation();
 
@@ -37,6 +37,13 @@ function NavBar({ isLoggedIn, onLogout }) {
             <Navbar.Toggle aria-controls="navbarScroll" />
             <Navbar.Collapse id="navbarScroll">
               <Nav className="ms-auto my-2 my-lg-0" navbarScroll>
+                {isLoggedIn && user && (
+                  <Nav.Link className={`${styles.NavLink} fw-bold`}>
+                    <i className="fa-solid fa-house"></i> Welcome,{" "}
+                    {user.username}
+                  </Nav.Link>
+                )}
+
                 {!isLoggedIn && (
                   <NavLink
                     to="/"
@@ -46,6 +53,7 @@ function NavBar({ isLoggedIn, onLogout }) {
                     <i className="fa-solid fa-house"></i> Home Page
                   </NavLink>
                 )}
+
                 {isLoggedIn && (
                   <>
                     <NavLink
