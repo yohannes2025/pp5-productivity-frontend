@@ -8,6 +8,7 @@ import styles from "../styles/Common.module.css";
 import clsx from "clsx";
 import api from "../services/api";
 import { format } from "date-fns";
+import { toast } from "react-toastify";
 
 const EditTask = () => {
   const { id } = useParams();
@@ -122,7 +123,8 @@ const EditTask = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setSuccessMessage("Task updated successfully!");
+      // setSuccessMessage("Task updated successfully!");
+      toast.success("Task updated successfully!");
       navigate("/tasklist", {
         state: { message: "Edit successful", type: "success" },
       });
@@ -130,7 +132,10 @@ const EditTask = () => {
       // console.error("Error updating task:", error);
       if (error.response && error.response.data) {
         // console.error("Backend validation errors:", error.response.data);
-        setErrorMessage(
+        // setErrorMessage(
+        //   "Failed to update the task. Please check the console for details."
+        // );
+        toast.error(
           "Failed to update the task. Please check the console for details."
         );
       } else {
