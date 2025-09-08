@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import CreateTask from "../components/CreateTask";
 import api from "../services/api";
 import { Container, Alert, Spinner } from "react-bootstrap";
+import { toast } from "react-toastify";
 
 const CreateTaskPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
@@ -27,6 +28,7 @@ const CreateTaskPage = () => {
       });
 
       // Navigate to the task list or detail page after success
+      toast.success("Task created successfully!");
       navigate("/tasklist");
 
       return response.data;
@@ -38,7 +40,8 @@ const CreateTaskPage = () => {
         setErrorMessage(detail);
         throw new Error(detail);
       } else {
-        setErrorMessage(error.message || "Failed to create task.");
+        //setErrorMessage(error.message || "Failed to create task.");
+        toast.error(error.message || "Failed to create task.");
         throw error;
       }
     } finally {
