@@ -1,20 +1,23 @@
-//src / App.js(updated);
+// src/App.js
 import React, { useState, useEffect } from "react";
+import NavBar from "./components/NavBar";
+import styles from "./App.module.css";
+import Container from "react-bootstrap/Container";
+import "bootstrap/dist/css/bootstrap.min.css";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { BrowserRouter } from "react-router-dom";
-import api from "./services/api";
 import Login from "./components/Login";
 import Register from "./components/Register";
-import NavBar from "./components/NavBar";
-import CreateTask from "./components/CreateTask";
-import ProtectedRoute from "./components/ProtectedRoute";
+import EditTask from "./components/EditTask";
 import TaskList from "./components/TaskList";
-import { Container } from "react-bootstrap";
-import styles from "./App.css";
+import HomePage from "./components/HomePage";
+import "react-datepicker/dist/react-datepicker.css";
+import CreateTaskPage from "./components/CreateTaskPage";
+import NotFound from "./components/NotFound";
+import ProtectedRoute from "./ProtectedRoute";
+import api from "./services/api";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -23,6 +26,7 @@ function App() {
         setIsLoggedIn(false);
         return;
       }
+
       try {
         await api.post("/api/token/verify/", { token });
         setIsLoggedIn(true);
@@ -34,54 +38,58 @@ function App() {
         setIsLoggedIn(false);
       }
     };
+
     verifyToken();
   }, []);
 
-  // Fetch user info when logged in
-  useEffect(() => {
-    if (isLoggedIn) {
-      const fetchUser = async () => {
-        try {
-          const res = await api.get("/api/users/me/");
-          setUser(res.data);
-        } catch (err) {
-          console.error("Failed to fetch user");
-        }
-      };
-      fetchUser();
-    }
-  }, [isLoggedIn]);
-
-  // Handle login
-  const handleLogin = (userData, tokens) => {
-    localStorage.setItem("access_token", tokens.access);
-    localStorage.setItem("refresh_token", tokens.refresh);
-    api.defaults.headers.common["Authorization"] = `Bearer ${tokens.access}`;
+  const handleLogin = () => {
     setIsLoggedIn(true);
-    setUser(userData);
   };
 
-  // Handle logout
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    delete api.defaults.headers.common["Authorization"];
     setIsLoggedIn(false);
-    setUser(null);
-    api.defaults.headers.common["Authorization"] = null;
   };
 
   return (
     <div className="App">
-      <NavBar isLoggedIn={isLoggedIn} onLogout={handleLogout} user={user} />
-      <Container>
+      <NavBar isLoggedIn={isLoggedIn} onLogout={handleLogout} />
+      <Container className={styles.container}>
         <Routes>
+          <Route
+            path="/"
+            element={isLoggedIn ? <Navigate to="/createtask" /> : <HomePage />}
+          />
+          <Route
+            path="/login"
+            element={
+              isLoggedIn ? (
+                <Navigate to="/createtask" />
+              ) : (
+                <Login onLogin={handleLogin} />
+              )
+            }
+          />
           <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
           <Route
             path="/createtask"
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn}>
-                <CreateTask />
+                <CreateTaskPage
+                  users={[]}
+                  onSubmit={() => {}}
+                  onCancel={() => {}}
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edittask/:id"
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn}>
+                <EditTask />
               </ProtectedRoute>
             }
           />
@@ -93,6 +101,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Container>
     </div>
