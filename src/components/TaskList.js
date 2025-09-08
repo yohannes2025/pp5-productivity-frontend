@@ -17,6 +17,7 @@ import clsx from "clsx";
 // Import useNavigate from react-router-dom
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api"; // Assuming your api service handles auth headers
+import { toast } from "react-toastify";
 
 const TASKS_API_ENDPOINT = "/api/tasks/";
 const USERS_API_ENDPOINT = "/api/users/"; // Endpoint to fetch user data
@@ -143,6 +144,7 @@ const TaskList = () => {
     setCompletingTaskId(task.id);
     try {
       await api.patch(`/api/tasks/${task.id}/`, { status: "done" });
+      toast.success("Task marked as complete!");
       const updatedTasks = tasks.map((t) =>
         t.id === task.id ? { ...t, status: "done" } : t
       );
@@ -156,7 +158,12 @@ const TaskList = () => {
       }
     } catch (err) {
       // console.error("Failed to mark task complete:", err);
-      setError("Failed to mark task complete. Please try again.");
+      // setError("Failed to mark task complete. Please try again.");
+      toast.error(
+        err.response?.data?.detail ||
+          err.message ||
+          "Failed to mark task complete. Please try again."
+      );
     } finally {
       setCompletingTaskId(null);
     }
@@ -180,6 +187,7 @@ const TaskList = () => {
 
     try {
       await api.delete(`/api/tasks/${taskToDelete.id}/`);
+      toast.success("Task deleted successfully!");
       // Remove the deleted task from the state
       setTasks(tasks.filter((task) => task.id !== taskToDelete.id));
       // If the deleted task was the selected one, close the details view
@@ -188,7 +196,12 @@ const TaskList = () => {
       }
     } catch (err) {
       // console.error("Failed to delete task:", err);
-      setError(
+      // setError(
+      //   err.response?.data?.detail ||
+      //     err.message ||
+      //     "Failed to delete task. Please try again."
+      // );
+      toast.error(
         err.response?.data?.detail ||
           err.message ||
           "Failed to delete task. Please try again."
