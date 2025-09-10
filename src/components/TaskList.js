@@ -103,22 +103,25 @@ const TaskList = () => {
 
     if (searchText) {
       const lowerCaseSearchText = searchText.toLowerCase();
-      filteredTasks = filteredTasks.filter(
-        (task) =>
+      filteredTasks = filteredTasks.filter((task) => {
+        const categoryName = task.category?.name || ""; // safely get category name
+        return (
           task.title?.toLowerCase().includes(lowerCaseSearchText) ||
           task.description?.toLowerCase().includes(lowerCaseSearchText) ||
-          task.category?.toLowerCase().includes(lowerCaseSearchText) ||
+          categoryName.toLowerCase().includes(lowerCaseSearchText) ||
           task.assigned_users?.some((userId) => {
             const userName = getUserNameById(userId);
             return userName.toLowerCase().includes(lowerCaseSearchText);
           })
-      );
+        );
+      });
     }
 
     if (filterOptions.category) {
       filteredTasks = filteredTasks.filter(
         (task) =>
-          task.category?.toLowerCase() === filterOptions.category.toLowerCase()
+          task.category?.name?.toLowerCase() ===
+          filterOptions.category.toLowerCase()
       );
     }
 
