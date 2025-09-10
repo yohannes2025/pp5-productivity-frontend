@@ -1,3 +1,5 @@
+/*src/styles/NavBar.module*/
+
 .NavBar {
   background-color: rgb(223, 236, 198);
   border: 1px solid #dadadf;
@@ -8,10 +10,6 @@
   text-decoration: none;
   transition: color ease-in-out 0.3s;
 }
-
-/* .Active i {
-  color: #2142b2;
-} */
 
 .NavLink:hover i {
   color: #2142b2;
