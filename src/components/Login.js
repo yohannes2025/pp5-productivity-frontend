@@ -1,5 +1,4 @@
-// Fsr Path: src/components/Login.js
-
+// src/components/Login.js
 import React, { useState } from "react";
 import api from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
@@ -25,19 +24,27 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
 
     try {
+      // Call your backend login endpoint
       const response = await api.post("/api/login/", {
         email,
         password,
       });
 
+      // Destructure access and refresh tokens
       const { access, refresh } = response.data;
 
+      // Store tokens in localStorage
       localStorage.setItem("access_token", access);
       localStorage.setItem("refresh_token", refresh);
+
+      // Set default Authorization header for all future requests
       api.defaults.headers.common["Authorization"] = `Bearer ${access}`;
 
-      await onLogin(access); // Pass the access token here
-      navigate("/");
+      // Notify App.js about login so it can fetch the user
+      await onLogin(access);
+
+      // Redirect to the main page after successful login
+      navigate("/createtask");
     } catch (err) {
       console.error("Login error:", err.response || err);
       setError(
