@@ -1,4 +1,5 @@
-// src/components/EditTask.js
+// export default EditTask;
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
@@ -17,42 +18,32 @@ const EditTask = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState(new Date());
-  const [priority, setPriority] = useState("low");
-
-  // Define the category choices
-  const CATEGORY_CHOICES = [
-    "development",
-    "design",
-    "testing",
-    "documentation",
-    "other",
-  ];
-  const [category, setCategory] = useState(CATEGORY_CHOICES[0]);
-
+  const [priority, setPriority] = useState("medium");
+  const [category, setCategory] = useState("");
   const [status, setStatus] = useState("pending");
   const [assignedUsers, setAssignedUsers] = useState([]);
   const [files, setFiles] = useState([]);
   const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-    const fetchTaskAndUsers = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("access_token");
-        const [taskRes, usersRes] = await Promise.all([
+
+        const [taskRes, usersRes, catsRes] = await Promise.all([
           api.get(`/api/tasks/${id}/`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }),
-          api.get(`/api/users/`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+          api.get("/api/users/", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          api.get("/api/categories/", {
+            headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
 
@@ -60,21 +51,24 @@ const EditTask = () => {
         setTitle(task.title);
         setDescription(task.description);
         setDueDate(task.due_date ? new Date(task.due_date) : new Date());
-        setPriority(task.priority);
-        // Set the category from the fetched task data
-        setCategory(task.category || CATEGORY_CHOICES[0]); // Use fetched category or default
-        setStatus(task.status);
+        setPriority(task.priority || "medium");
+        setStatus(task.status || "pending");
         setAssignedUsers(task.assigned_users.map((u) => String(u)));
         setUsers(usersRes.data);
+        setCategories(catsRes.data);
+
+        // Set task category or default first category
+        setCategory(
+          task.category || (catsRes.data[0] ? String(catsRes.data[0].id) : "")
+        );
       } catch (error) {
-        // console.error("Error fetching task or users:", error);
-        setErrorMessage("Failed to load task or users.");
+        setErrorMessage("Failed to load task, users, or categories.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTaskAndUsers();
+    fetchData();
   }, [id]);
 
   const handleAssignedUserChange = (e) => {
@@ -92,57 +86,43 @@ const EditTask = () => {
     e.preventDefault();
     setSubmitting(true);
     setErrorMessage("");
-    setSuccessMessage("");
-
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-
-    if (dueDate instanceof Date && !isNaN(dueDate)) {
-      formData.append("due_date", format(dueDate, "yyyy-MM-dd"));
-    } else {
-      // console.warn("Invalid due date, not appending to form data.");
-    }
-
-    formData.append("priority", priority);
-    formData.append("category", category);
-    formData.append("status", status);
-
-    assignedUsers.forEach((userId) => {
-      formData.append("assigned_users", Number(userId));
-    });
-
-    files.forEach((file) => formData.append("upload_files", file));
 
     try {
-      const token = localStorage.getItem("access_token");
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
 
+      if (dueDate instanceof Date && !isNaN(dueDate)) {
+        formData.append("due_date", format(dueDate, "yyyy-MM-dd"));
+      }
+
+      formData.append("priority", priority);
+      formData.append("category", category);
+      formData.append("status", status);
+
+      assignedUsers.forEach((userId) =>
+        formData.append("assigned_users", Number(userId))
+      );
+      files.forEach((file) => formData.append("files", file));
+
+      const token = localStorage.getItem("access_token");
       await api.put(`/api/tasks/${id}/`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
       });
-      // setSuccessMessage("Task updated successfully!");
+
       toast.success("Task updated successfully!");
       navigate("/tasklist", {
         state: { message: "Edit successful", type: "success" },
       });
     } catch (error) {
-      // console.error("Error updating task:", error);
-      if (error.response && error.response.data) {
-        // console.error("Backend validation errors:", error.response.data);
-        // setErrorMessage(
-        //   "Failed to update the task. Please check the console for details."
-        // );
-        toast.error(
-          "Failed to update the task. Please check the console for details."
-        );
-      } else {
-        setErrorMessage(
-          "Failed to update the task. An unexpected error occurred."
-        );
-      }
+      setErrorMessage(
+        error?.response?.data?.detail ||
+          "Failed to update the task. Please try again."
+      );
+      toast.error("Failed to update the task.");
     } finally {
       setSubmitting(false);
     }
@@ -158,7 +138,7 @@ const EditTask = () => {
     return (
       <Container className="text-center mt-5">
         <Spinner animation="border" />
-        <p>Loading task...</p>
+        <p>Loading task, users, and categories...</p>
       </Container>
     );
   }
@@ -180,12 +160,10 @@ const EditTask = () => {
         {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
 
         <Form onSubmit={handleSubmit}>
-          <Form.Group>
-            <Form.Label htmlFor="title">Task Title</Form.Label>
+          {/* Title */}
+          <Form.Group controlId="taskTitle">
             <Form.Control
               type="text"
-              id="title"
-              name="title"
               placeholder="Task Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -193,12 +171,10 @@ const EditTask = () => {
             />
           </Form.Group>
 
-          <Form.Group className="mt-3">
-            <Form.Label htmlFor="description">Task Description</Form.Label>
+          {/* Description */}
+          <Form.Group controlId="taskDescription" className="mt-3">
             <Form.Control
               as="textarea"
-              id="description"
-              name="description"
               placeholder="Task Description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -207,24 +183,22 @@ const EditTask = () => {
             />
           </Form.Group>
 
-          <Form.Group className="mt-3">
-            <Form.Label htmlFor="dueDate">Due Date</Form.Label>
+          {/* Due Date */}
+          <Form.Group controlId="dueDate" className="mt-3">
+            <Form.Label>Due Date</Form.Label>
             <DatePicker
-              id="dueDate"
-              name="dueDate"
               selected={dueDate}
               onChange={(date) => setDueDate(date)}
               className="form-control"
               required
-              dateFormat="yyyy-MM-dd" // Specify date format
+              minDate={new Date()}
             />
           </Form.Group>
 
-          <Form.Group className="mt-3">
-            <Form.Label htmlFor="priority">Priority</Form.Label>
+          {/* Priority */}
+          <Form.Group controlId="taskPriority" className="mt-3">
+            <Form.Label>Priority</Form.Label>
             <Form.Select
-              id="priority"
-              name="priority"
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
             >
@@ -234,56 +208,54 @@ const EditTask = () => {
             </Form.Select>
           </Form.Group>
 
-          <Form.Group className="mt-3">
-            <Form.Label htmlFor="category">Category</Form.Label>
+          {/* Category */}
+          <Form.Group controlId="taskCategory" className="mt-3">
+            <Form.Label>Category</Form.Label>
             <Form.Select
-              id="category"
-              name="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
+              required
             >
-              {/* Map over the CATEGORY_CHOICES to create options */}
-              {CATEGORY_CHOICES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}{" "}
-                  {/* Capitalize for display */}
+              <option value="">Select a category</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={String(cat.id)}>
+                  {cat.name}
                 </option>
               ))}
             </Form.Select>
           </Form.Group>
 
-          <Form.Group className="mt-3">
-            <Form.Label htmlFor="status">Status</Form.Label>
+          {/* Status */}
+          <Form.Group controlId="taskStatus" className="mt-3">
+            <Form.Label>Status</Form.Label>
             <Form.Select
-              id="status"
-              name="status"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
-              <option value="pending">Pending</option>
+              <option value="pending">To Do</option>
               <option value="in_progress">In Progress</option>
               <option value="done">Done</option>
             </Form.Select>
           </Form.Group>
 
-          <Form.Group className="mt-3">
-            <Form.Label htmlFor="assignedUsers">Assigned Users</Form.Label>
+          {/* Assigned Users */}
+          <Form.Group controlId="assignedUsers" className="mt-3">
+            <Form.Label>Assigned Users</Form.Label>
             <Form.Select
               multiple
-              id="assignedUsers"
-              name="assigned_users"
               value={assignedUsers}
               onChange={handleAssignedUserChange}
             >
               {users.map((user) => (
                 <option key={user.id} value={String(user.id)}>
-                  {user.name || user.username}
+                  {user.username || user.name}
                 </option>
               ))}
             </Form.Select>
           </Form.Group>
 
-          <Form.Group className="mt-3">
+          {/* Files */}
+          <Form.Group controlId="taskFiles" className="mt-3">
             <Form.Label>Upload Files</Form.Label>
             <Form.Control type="file" multiple onChange={handleFileChange} />
           </Form.Group>
