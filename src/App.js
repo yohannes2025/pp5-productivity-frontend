@@ -15,7 +15,6 @@ import Register from "./components/Register";
 import EditTask from "./components/EditTask";
 import TaskList from "./components/TaskList";
 import HomePage from "./components/HomePage";
-import "react-datepicker/dist/react-datepicker.css";
 import CreateTaskPage from "./components/CreateTaskPage";
 import NotFound from "./components/NotFound";
 import ProtectedRoute from "./ProtectedRoute";
@@ -26,41 +25,58 @@ import "react-toastify/dist/ReactToastify.css";
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
+  // Fetch user from backend
   const fetchUser = async (token) => {
     try {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      // Corrected URL to match the backend
       const res = await api.get("/api/users/me/");
       setUser(res.data);
       setIsLoggedIn(true);
       return res.data;
     } catch (err) {
-      console.error("Failed to fetch user:", err);
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      setIsLoggedIn(false);
-      setUser(null);
-      throw err;
+      console.warn("Access token may be expired, trying refresh...", err);
+
+      // Try to refresh token
+      const refreshToken = localStorage.getItem("refresh_token");
+      if (refreshToken) {
+        try {
+          const refreshRes = await api.post("/api/token/refresh/", {
+            refresh: refreshToken,
+          });
+          const newAccess = refreshRes.data.access;
+          localStorage.setItem("access_token", newAccess);
+          api.defaults.headers.common["Authorization"] = `Bearer ${newAccess}`;
+          const userRes = await api.get("/api/users/me/");
+          setUser(userRes.data);
+          setIsLoggedIn(true);
+          return userRes.data;
+        } catch (refreshErr) {
+          console.error("Refresh token failed:", refreshErr);
+          handleLogout();
+          throw refreshErr;
+        }
+      } else {
+        handleLogout();
+        throw err;
+      }
     }
   };
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (token) {
-      fetchUser(token);
+      fetchUser(token).finally(() => setLoadingUser(false));
     } else {
       setIsLoggedIn(false);
       setUser(null);
+      setLoadingUser(false);
     }
   }, []);
 
   const handleLogin = async (token) => {
-    try {
-      await fetchUser(token);
-    } catch (err) {
-      console.error("Login failed:", err);
-    }
+    await fetchUser(token);
   };
 
   const handleLogout = () => {
@@ -70,6 +86,14 @@ function App() {
     setIsLoggedIn(false);
     setUser(null);
   };
+
+  if (loadingUser) {
+    return (
+      <div className="text-center mt-5">
+        <p>Loading user data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="App">
@@ -96,11 +120,7 @@ function App() {
             path="/createtask"
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn}>
-                <CreateTaskPage
-                  users={[]}
-                  onSubmit={() => {}}
-                  onCancel={() => {}}
-                />
+                <CreateTaskPage onSubmit={() => {}} onCancel={() => {}} />
               </ProtectedRoute>
             }
           />
