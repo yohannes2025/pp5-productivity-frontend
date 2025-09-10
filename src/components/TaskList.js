@@ -10,21 +10,20 @@ import {
   Table,
   Spinner,
   Alert,
-  Modal, // Import Modal for confirmation
+  Modal,
 } from "react-bootstrap";
 import styles from "../styles/Common.module.css";
 import clsx from "clsx";
-// Import useNavigate from react-router-dom
 import { Link, useNavigate } from "react-router-dom";
-import api from "../services/api"; // Assuming your api service handles auth headers
+import api from "../services/api";
 import { toast } from "react-toastify";
 
 const TASKS_API_ENDPOINT = "/api/tasks/";
-const USERS_API_ENDPOINT = "/api/users/"; // Endpoint to fetch user data
+const USERS_API_ENDPOINT = "/api/users/";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
-  const [users, setUsers] = useState([]); // State to store user data
+  const [users, setUsers] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [filterOptions, setFilterOptions] = useState({
@@ -35,14 +34,13 @@ const TaskList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [completingTaskId, setCompletingTaskId] = useState(null);
-  const [deletingTaskId, setDeletingTaskId] = useState(null); // State for task being deleted
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // State for delete confirmation modal
-  const [taskToDelete, setTaskToDelete] = useState(null); // State to hold the task to be deleted
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
-  // Initialize useNavigate hook
   const navigate = useNavigate();
 
-  // Define the available categories
+  // Define categories and statuses
   const availableCategories = [
     "development",
     "design",
@@ -52,19 +50,43 @@ const TaskList = () => {
   ];
   const availableStatuses = ["pending", "in_progress", "done"];
 
+  // Helper functions
+  const getUserNameById = (userId) => {
+    const user = users.find((user) => user.id === userId);
+    return user ? user.username : "Unknown User";
+  };
+
+  const getCategoryLabel = (categoryValue) => {
+    if (!categoryValue || typeof categoryValue !== "string") return "Other";
+    const category = availableCategories.find(
+      (c) => c.toLowerCase() === categoryValue.toLowerCase()
+    );
+    return category
+      ? category.charAt(0).toUpperCase() + category.slice(1)
+      : "Other";
+  };
+
+  const getStatusLabel = (statusValue) => {
+    if (!statusValue) return "Unknown";
+    return statusValue
+      .replace("_", " ")
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  // Fetch tasks and users
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError("");
       try {
-        // Fetch tasks
         const tasksResponse = await api.get(TASKS_API_ENDPOINT);
         setTasks(tasksResponse.data);
-        // Fetch users
+
         const usersResponse = await api.get(USERS_API_ENDPOINT);
         setUsers(usersResponse.data);
       } catch (err) {
-        // console.error("Failed to load data:", err);
         setError(
           err.response?.data?.detail || err.message || "Unable to load data."
         );
@@ -75,12 +97,7 @@ const TaskList = () => {
     fetchData();
   }, []);
 
-  // Helper function to get user name by ID
-  const getUserNameById = (userId) => {
-    const user = users.find((user) => user.id === userId);
-    return user ? user.username : "Unknown User"; // Use username as the display name
-  };
-
+  // Filter and sort tasks
   const filteredAndSortedTasks = useMemo(() => {
     let filteredTasks = tasks;
 
@@ -88,9 +105,9 @@ const TaskList = () => {
       const lowerCaseSearchText = searchText.toLowerCase();
       filteredTasks = filteredTasks.filter(
         (task) =>
-          task.title?.toLowerCase().includes(lowerCaseSearchText) || // Added null check
-          task.description?.toLowerCase().includes(lowerCaseSearchText) || // Added null check
-          task.category?.toLowerCase().includes(lowerCaseSearchText) || // Added null check
+          task.title?.toLowerCase().includes(lowerCaseSearchText) ||
+          task.description?.toLowerCase().includes(lowerCaseSearchText) ||
+          task.category?.toLowerCase().includes(lowerCaseSearchText) ||
           task.assigned_users?.some((userId) => {
             const userName = getUserNameById(userId);
             return userName.toLowerCase().includes(lowerCaseSearchText);
@@ -101,14 +118,14 @@ const TaskList = () => {
     if (filterOptions.category) {
       filteredTasks = filteredTasks.filter(
         (task) =>
-          task.category?.toLowerCase() === filterOptions.category.toLowerCase() // Added null check
+          task.category?.toLowerCase() === filterOptions.category.toLowerCase()
       );
     }
 
     if (filterOptions.status) {
       filteredTasks = filteredTasks.filter(
         (task) =>
-          task.status?.toLowerCase() === filterOptions.status.toLowerCase() // Added null check
+          task.status?.toLowerCase() === filterOptions.status.toLowerCase()
       );
     }
 
@@ -116,22 +133,21 @@ const TaskList = () => {
       if (sortOption === "dueDate") {
         const dateA = a.due_date ? new Date(a.due_date) : null;
         const dateB = b.due_date ? new Date(b.due_date) : null;
-        if (dateA && dateB) return dateA.getTime() - dateB.getTime(); // Compare timestamps
-        if (dateA) return -1; // Tasks with due dates come first
-        if (dateB) return 1; // Tasks with due dates come first
-        return 0; // Both null or invalid dates
+        if (dateA && dateB) return dateA.getTime() - dateB.getTime();
+        if (dateA) return -1;
+        if (dateB) return 1;
+        return 0;
       } else if (sortOption === "priority") {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
-        // Handle cases where priority might be missing or unexpected
-        const priorityA = priorityOrder[a.priority?.toLowerCase()] || 0; // Added null check
-        const priorityB = priorityOrder[b.priority?.toLowerCase()] || 0; // Added null check
-        return priorityB - priorityA; // High to Low
+        const priorityA = priorityOrder[a.priority?.toLowerCase()] || 0;
+        const priorityB = priorityOrder[b.priority?.toLowerCase()] || 0;
+        return priorityB - priorityA;
       }
       return 0;
     });
 
     return sortedTasks;
-  }, [tasks, users, searchText, filterOptions, sortOption]); // Added users to dependency array
+  }, [tasks, users, searchText, filterOptions, sortOption]);
 
   const handleTaskClick = (task) => setSelectedTask(task);
   const closeTaskDetails = () => setSelectedTask(null);
@@ -149,7 +165,6 @@ const TaskList = () => {
         t.id === task.id ? { ...t, status: "done" } : t
       );
       setTasks(updatedTasks);
-      // If the completed task is the selected task, update the selected task
       if (selectedTask && selectedTask.id === task.id) {
         setSelectedTask((prevSelected) => ({
           ...prevSelected,
@@ -157,8 +172,6 @@ const TaskList = () => {
         }));
       }
     } catch (err) {
-      // console.error("Failed to mark task complete:", err);
-      // setError("Failed to mark task complete. Please try again.");
       toast.error(
         err.response?.data?.detail ||
           err.message ||
@@ -169,38 +182,27 @@ const TaskList = () => {
     }
   };
 
-  // Function to initiate the delete process (show confirmation modal)
   const handleDeleteClick = (task, event) => {
-    // Prevent the row click event from firing
     event.stopPropagation();
     setTaskToDelete(task);
     setShowDeleteConfirm(true);
   };
 
-  // Function to handle the actual deletion after confirmation
   const confirmDelete = async () => {
     if (!taskToDelete) return;
 
     setDeletingTaskId(taskToDelete.id);
-    setShowDeleteConfirm(false); // Close the modal
-    setError(""); // Clear previous errors
+    setShowDeleteConfirm(false);
+    setError("");
 
     try {
       await api.delete(`/api/tasks/${taskToDelete.id}/`);
       toast.success("Task deleted successfully!");
-      // Remove the deleted task from the state
       setTasks(tasks.filter((task) => task.id !== taskToDelete.id));
-      // If the deleted task was the selected one, close the details view
       if (selectedTask && selectedTask.id === taskToDelete.id) {
         setSelectedTask(null);
       }
     } catch (err) {
-      // console.error("Failed to delete task:", err);
-      // setError(
-      //   err.response?.data?.detail ||
-      //     err.message ||
-      //     "Failed to delete task. Please try again."
-      // );
       toast.error(
         err.response?.data?.detail ||
           err.message ||
@@ -208,23 +210,18 @@ const TaskList = () => {
       );
     } finally {
       setDeletingTaskId(null);
-      setTaskToDelete(null); // Clear the task to delete state
+      setTaskToDelete(null);
     }
   };
 
-  // Function to close the delete confirmation modal
   const cancelDelete = () => {
     setShowDeleteConfirm(false);
     setTaskToDelete(null);
   };
 
-  // Function to handle the Edit button click in the modal
   const handleEditClick = (taskId, event) => {
-    // Prevent the click event from propagating to the modal's background (which would close it)
     event.stopPropagation();
-    // Close the task details modal
     closeTaskDetails();
-    // Navigate to the edit task page
     navigate(`/edittask/${taskId}`);
   };
 
@@ -265,7 +262,6 @@ const TaskList = () => {
                   }
                 >
                   <option value="">All Categories</option>
-                  {/* Map over availableCategories for filter options */}
                   {availableCategories.map((category) => (
                     <option key={category} value={category}>
                       {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -284,13 +280,7 @@ const TaskList = () => {
                   <option value="">All Statuses</option>
                   {availableStatuses.map((status) => (
                     <option key={status} value={status}>
-                      {status
-                        .replace("_", " ")
-                        .split(" ")
-                        .map(
-                          (word) => word.charAt(0).toUpperCase() + word.slice(1)
-                        )
-                        .join(" ")}
+                      {getStatusLabel(status)}
                     </option>
                   ))}
                 </Form.Select>
@@ -347,8 +337,8 @@ const TaskList = () => {
                         : "No Due Date"}
                     </td>
                     <td>{task.priority}</td>
-                    <td>{task.category}</td>
-                    <td>{task.status}</td>
+                    <td>{getCategoryLabel(task.category)}</td>
+                    <td>{getStatusLabel(task.status)}</td>
                     <td>
                       {task.assigned_users && Array.isArray(task.assigned_users)
                         ? task.assigned_users
@@ -357,7 +347,6 @@ const TaskList = () => {
                         : "Unassigned"}
                     </td>
                     <td>
-                      {/* Edit Button (Table Row) */}
                       <Link
                         to={`/edittask/${task.id}`}
                         onClick={(e) => e.stopPropagation()}
@@ -370,11 +359,10 @@ const TaskList = () => {
                           Edit
                         </Button>
                       </Link>
-                      {/* Complete Button */}
                       <Button
                         variant="outline-success"
                         size="sm"
-                        className="me-2" // Added margin
+                        className="me-2"
                         onClick={(e) => {
                           e.stopPropagation();
                           markTaskComplete(task);
@@ -390,11 +378,10 @@ const TaskList = () => {
                           "Complete"
                         )}
                       </Button>
-                      {/* Delete Button */}
                       <Button
                         variant="outline-danger"
                         size="sm"
-                        onClick={(e) => handleDeleteClick(task, e)} // Pass event to prevent row click
+                        onClick={(e) => handleDeleteClick(task, e)}
                         disabled={deletingTaskId === task.id}
                       >
                         {deletingTaskId === task.id ? (
@@ -420,7 +407,7 @@ const TaskList = () => {
         )}
       </Card>
 
-      {/* Task Details Modal (using Card for styling) */}
+      {/* Task Details Modal */}
       {selectedTask && (
         <>
           <div
@@ -443,14 +430,14 @@ const TaskList = () => {
                 : "No Due Date"}
             </p>
             <p>
-              <strong>Category:</strong> {selectedTask.category}{" "}
-              {/* Display category */}
+              <strong>Category:</strong>{" "}
+              {getCategoryLabel(selectedTask.category)}
             </p>
             <p>
               <strong>Priority:</strong> {selectedTask.priority}
             </p>
             <p>
-              <strong>Status:</strong> {selectedTask.status}
+              <strong>Status:</strong> {getStatusLabel(selectedTask.status)}
             </p>
             <p>
               <strong>Assigned:</strong>{" "}
@@ -462,7 +449,6 @@ const TaskList = () => {
                 : "Unassigned"}
             </p>
 
-            {/* Display files if any */}
             {selectedTask.upload_files &&
               selectedTask.upload_files.length > 0 && (
                 <div className="mt-3">
@@ -475,7 +461,7 @@ const TaskList = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {file.file.split("/").pop()} {/* Display filename */}
+                          {file.file.split("/").pop()}
                         </a>
                       </li>
                     ))}
@@ -498,17 +484,15 @@ const TaskList = () => {
                   "Complete"
                 )}
               </Button>
-              {/* Edit Button (Modal) - Use Button and handleEditClick */}
               <Button
                 variant="warning"
                 onClick={(e) => handleEditClick(selectedTask.id, e)}
               >
                 Edit
               </Button>
-              {/* Delete Button in Modal */}
               <Button
                 variant="danger"
-                onClick={(e) => handleDeleteClick(selectedTask, e)} // Use handleDeleteClick
+                onClick={(e) => handleDeleteClick(selectedTask, e)}
                 disabled={deletingTaskId === selectedTask?.id}
               >
                 {deletingTaskId === selectedTask?.id ? (
