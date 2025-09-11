@@ -46,7 +46,6 @@ const Login = ({ onLogin }) => {
       // Redirect to the main page after successful login
       navigate("/createtask");
     } catch (err) {
-      console.error("Login error:", err.response || err);
       setError(
         err.response?.data?.message ||
           err.response?.data?.detail ||
