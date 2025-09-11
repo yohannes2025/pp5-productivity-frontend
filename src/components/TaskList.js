@@ -1,4 +1,5 @@
-// TaskList.js
+// src/components/TaskList.js
+
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Container,
@@ -12,18 +13,22 @@ import {
   Alert,
   Modal,
 } from "react-bootstrap";
-import styles from "../styles/Common.module.css";
 import clsx from "clsx";
+import styles from "../styles/Common.module.css";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { toast } from "react-toastify";
 
 const TASKS_API_ENDPOINT = "/api/tasks/";
 const USERS_API_ENDPOINT = "/api/users/";
+const CATEGORIES_API_ENDPOINT = "/api/categories/";
+
+const availableStatuses = ["pending", "in_progress", "done"];
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [filterOptions, setFilterOptions] = useState({
@@ -40,30 +45,15 @@ const TaskList = () => {
 
   const navigate = useNavigate();
 
-  // Define categories and statuses
-  const availableCategories = [
-    "development",
-    "design",
-    "testing",
-    "documentation",
-    "other",
-  ];
-  const availableStatuses = ["pending", "in_progress", "done"];
-
   // Helper functions
   const getUserNameById = (userId) => {
     const user = users.find((user) => user.id === userId);
     return user ? user.username : "Unknown User";
   };
 
-  const getCategoryLabel = (categoryValue) => {
-    if (!categoryValue || typeof categoryValue !== "string") return "Other";
-    const category = availableCategories.find(
-      (c) => c.toLowerCase() === categoryValue.toLowerCase()
-    );
-    return category
-      ? category.charAt(0).toUpperCase() + category.slice(1)
-      : "Other";
+  const getCategoryNameById = (categoryId) => {
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category ? category.name : "Other";
   };
 
   const getStatusLabel = (statusValue) => {
@@ -75,17 +65,21 @@ const TaskList = () => {
       .join(" ");
   };
 
-  // Fetch tasks and users
+  // Fetch tasks, users, and categories
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError("");
       try {
-        const tasksResponse = await api.get(TASKS_API_ENDPOINT);
+        const [tasksResponse, usersResponse, categoriesResponse] =
+          await Promise.all([
+            api.get(TASKS_API_ENDPOINT),
+            api.get(USERS_API_ENDPOINT),
+            api.get(CATEGORIES_API_ENDPOINT),
+          ]);
         setTasks(tasksResponse.data);
-
-        const usersResponse = await api.get(USERS_API_ENDPOINT);
         setUsers(usersResponse.data);
+        setCategories(categoriesResponse.data);
       } catch (err) {
         setError(
           err.response?.data?.detail || err.message || "Unable to load data."
@@ -99,17 +93,19 @@ const TaskList = () => {
 
   // Filter and sort tasks
   const filteredAndSortedTasks = useMemo(() => {
-    let filteredTasks = tasks;
+    let filteredTasks = [...tasks];
 
     if (searchText) {
       const lowerCaseSearchText = searchText.toLowerCase();
       filteredTasks = filteredTasks.filter((task) => {
-        const categoryName = task.category?.name || ""; // safely get category name
+        const categoryName = task.category?.name || "";
         return (
-          task.title?.toLowerCase().includes(lowerCaseSearchText) ||
-          task.description?.toLowerCase().includes(lowerCaseSearchText) ||
-          categoryName.toLowerCase().includes(lowerCaseSearchText) ||
-          task.assigned_users?.some((userId) => {
+          (task.title || "").toLowerCase().includes(lowerCaseSearchText) ||
+          (task.description || "")
+            .toLowerCase()
+            .includes(lowerCaseSearchText) ||
+          (categoryName || "").toLowerCase().includes(lowerCaseSearchText) ||
+          (task.assigned_users || []).some((userId) => {
             const userName = getUserNameById(userId);
             return userName.toLowerCase().includes(lowerCaseSearchText);
           })
@@ -118,21 +114,23 @@ const TaskList = () => {
     }
 
     if (filterOptions.category) {
-      filteredTasks = filteredTasks.filter(
-        (task) =>
-          task.category?.name?.toLowerCase() ===
-          filterOptions.category.toLowerCase()
-      );
+      filteredTasks = filteredTasks.filter((task) => {
+        // Handle cases where category is an object with an id or just the id itself
+        const taskId =
+          typeof task.category === "object" ? task.category?.id : task.category;
+        return taskId === Number(filterOptions.category);
+      });
     }
 
     if (filterOptions.status) {
       filteredTasks = filteredTasks.filter(
         (task) =>
-          task.status?.toLowerCase() === filterOptions.status.toLowerCase()
+          (task.status || "").toLowerCase() ===
+          filterOptions.status.toLowerCase()
       );
     }
 
-    const sortedTasks = [...filteredTasks].sort((a, b) => {
+    return filteredTasks.sort((a, b) => {
       if (sortOption === "dueDate") {
         const dateA = a.due_date ? new Date(a.due_date) : null;
         const dateB = b.due_date ? new Date(b.due_date) : null;
@@ -142,15 +140,13 @@ const TaskList = () => {
         return 0;
       } else if (sortOption === "priority") {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
-        const priorityA = priorityOrder[a.priority?.toLowerCase()] || 0;
-        const priorityB = priorityOrder[b.priority?.toLowerCase()] || 0;
+        const priorityA = priorityOrder[(a.priority || "").toLowerCase()] || 0;
+        const priorityB = priorityOrder[(b.priority || "").toLowerCase()] || 0;
         return priorityB - priorityA;
       }
       return 0;
     });
-
-    return sortedTasks;
-  }, [tasks, users, searchText, filterOptions, sortOption]);
+  }, [tasks, users, categories, searchText, filterOptions, sortOption]);
 
   const handleTaskClick = (task) => setSelectedTask(task);
   const closeTaskDetails = () => setSelectedTask(null);
@@ -164,15 +160,11 @@ const TaskList = () => {
     try {
       await api.patch(`/api/tasks/${task.id}/`, { status: "done" });
       toast.success("Task marked as complete!");
-      const updatedTasks = tasks.map((t) =>
-        t.id === task.id ? { ...t, status: "done" } : t
+      setTasks((prev) =>
+        prev.map((t) => (t.id === task.id ? { ...t, status: "done" } : t))
       );
-      setTasks(updatedTasks);
-      if (selectedTask && selectedTask.id === task.id) {
-        setSelectedTask((prevSelected) => ({
-          ...prevSelected,
-          status: "done",
-        }));
+      if (selectedTask?.id === task.id) {
+        setSelectedTask((prev) => ({ ...prev, status: "done" }));
       }
     } catch (err) {
       toast.error(
@@ -193,7 +185,6 @@ const TaskList = () => {
 
   const confirmDelete = async () => {
     if (!taskToDelete) return;
-
     setDeletingTaskId(taskToDelete.id);
     setShowDeleteConfirm(false);
     setError("");
@@ -201,10 +192,8 @@ const TaskList = () => {
     try {
       await api.delete(`/api/tasks/${taskToDelete.id}/`);
       toast.success("Task deleted successfully!");
-      setTasks(tasks.filter((task) => task.id !== taskToDelete.id));
-      if (selectedTask && selectedTask.id === taskToDelete.id) {
-        setSelectedTask(null);
-      }
+      setTasks((prev) => prev.filter((task) => task.id !== taskToDelete.id));
+      if (selectedTask?.id === taskToDelete.id) setSelectedTask(null);
     } catch (err) {
       toast.error(
         err.response?.data?.detail ||
@@ -265,9 +254,9 @@ const TaskList = () => {
                   }
                 >
                   <option value="">All Categories</option>
-                  {availableCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
                     </option>
                   ))}
                 </Form.Select>
@@ -340,7 +329,13 @@ const TaskList = () => {
                         : "No Due Date"}
                     </td>
                     <td>{task.priority}</td>
-                    <td>{getCategoryLabel(task.category)}</td>
+                    <td>
+                      {getCategoryNameById(
+                        typeof task.category === "object"
+                          ? task.category.id
+                          : task.category
+                      )}
+                    </td>
                     <td>{getStatusLabel(task.status)}</td>
                     <td>
                       {task.assigned_users && Array.isArray(task.assigned_users)
@@ -434,7 +429,11 @@ const TaskList = () => {
             </p>
             <p>
               <strong>Category:</strong>{" "}
-              {getCategoryLabel(selectedTask.category)}
+              {getCategoryNameById(
+                typeof selectedTask.category === "object"
+                  ? selectedTask.category.id
+                  : selectedTask.category
+              )}
             </p>
             <p>
               <strong>Priority:</strong> {selectedTask.priority}
